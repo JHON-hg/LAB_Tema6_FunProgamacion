@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-
 class Program
 {
     static string archivoEquipos = "equipos_fund.txt";
     static string archivoPrestamos = "prestamos_fund.txt";
-
     static void Main()
     {
         int opc = 0;
@@ -17,14 +15,11 @@ class Program
         Console.Write("Es estudiante de la universidad? (s/n): ");
         confirmacion = Console.ReadLine();
 
-        if (confirmacion == "s" || confirmacion == "S")
-        {
-            do
-            {
-                MostrarMenuPrincipal();
+        if (confirmacion == "s" || confirmacion == "S"){
+            do{
+                MostrarMenu();
                 Console.Write("Elige una opcion: ");
                 opc = int.Parse(Console.ReadLine());
-
                 switch (opc){
                     case 1: RegistrarEquipo(); break;
                     case 2: RegistrarPrestamo(); break;
@@ -36,14 +31,14 @@ class Program
                 }
             } while (opc != 0);
         }
-        else{
+        else
+        {
             Console.WriteLine("No puedes usar el programa...");
         }
     }
-
 // =================================================================================
 // =================================================================================
-    static void MostrarMenuPrincipal(){
+    static void MostrarMenu(){
         Console.WriteLine("===== Prestamos de Equipos =====");
         Console.WriteLine("1. Registrar equipo");
         Console.WriteLine("2. Registrar un prestamo");
@@ -52,122 +47,175 @@ class Program
         Console.WriteLine("5. Equipos disponibles por categoria");
         Console.WriteLine("0. Salir");
     }
-// =================================================================================
-// =================================================================================
+    // =================================================================================
+    // =================================================================================
     static bool ValidarDato(string dato){
-        if (dato == null || dato.Trim() == "" || dato.Contains(","))
+        if (dato == null || dato.Contains(","))
         {
             return false;
         }
         return true;
     }
-// =================================================================================
-// =================================================================================
-    static string LeerDato(string mensaje){
+    // =================================================================================
+    // =================================================================================
+
+    static string LeerDato(string mensaje)
+    {
         string dato = "";
         do{
             Console.Write(mensaje);
             dato = Console.ReadLine();
-
             if (!ValidarDato(dato)){
                 Console.WriteLine("Dato vacio...");
-                Console.WriteLine("intente de Nuevo...");
+                Console.WriteLine("intente de nuevo...");
             }
         } while (!ValidarDato(dato));
-
-        return dato.Trim();
+        return dato;
     }
-// =================================================================================
-// =================================================================================
-    public static void RegistrarEquipo()
+    // =================================================================================
+    // =================================================================================
+    static void RegistrarEquipo()
     {
         string id, nombre, categoria, confirmacion = "";
-
         id = LeerDato("Ingresar Codigo: ");
+        if (File.Exists(archivoEquipos)){
+            string[] equipos = File.ReadAllLines(archivoEquipos);
+
+            for (int i = 0; i < equipos.Length; i++){
+
+                string[] datos = equipos[i].Split(',');
+                if (datos.Length >= 4 && datos[0] == id)
+                {
+                    Console.WriteLine("El codigo ya esta registrado...");
+                    return;
+                }
+            }
+        }
+
         nombre = LeerDato("Ingresar Nombre: ");
         categoria = LeerDato("Ingresar Categoria: ");
+
         Console.Write("Esta disponible? (si/no): ");
-        confirmacion = Console.ReadLine();
-        while (confirmacion != "si" && confirmacion != "no")
-        {
+        confirmacion = Console.ReadLine().ToLower();
+
+        while (confirmacion != "si" && confirmacion != "no"){
             Console.Write("Escribe si o no: ");
-            confirmacion = Console.ReadLine();
+            confirmacion = Console.ReadLine().ToLower();
         }
 
         string registro = id + "," + nombre + "," + categoria + "," + confirmacion;
-
         using (var archivo = new StreamWriter(archivoEquipos, true, Encoding.UTF8))
         {
             archivo.WriteLine(registro);
         }
         Console.WriteLine("equipo guardado...");
     }
-// =================================================================================
-// =================================================================================
-public static void DevolverEquipo()
-{
-    string id = LeerDato("Codigo del equipo a devolver: ");
-    if (!File.Exists(archivoPrestamos)){
-        Console.WriteLine("Prestamos no registrados...");
-        return;
-    }
+    // =================================================================================
+    // =================================================================================
+    static void RegistrarPrestamo()
+    {
+        string id, nombre, fecha;
+        id = LeerDato("Codigo del equipo a prestar: ");
+        nombre = LeerDato("Nombre del estudiante: ");
+        fecha = LeerDato("Fecha de prestamo (dd/mm/aaaa): ");
 
-    if (!File.Exists(archivoEquipos)){
-        Console.WriteLine("Equipos no registrados...");
-        return;
-    }
-
-    string[] prestamos = File.ReadAllLines(archivoPrestamos);
-    string[] equipos = File.ReadAllLines(archivoEquipos);
-    int posPrestamo = -1;
-    int posEquipo = -1;
-    for (int i = 0; i < prestamos.Length; i++){
-        string[] datos = prestamos[i].Split(',');
-
-        if (datos.Length >= 3 && datos[0] == id){
-            posPrestamo = i;
-            break;
+        if (!File.Exists(archivoEquipos)){
+            Console.WriteLine("No hay equipos registrados...");
+            return;
         }
-    }
 
-    if (posPrestamo == -1){
-        Console.WriteLine("No hay prestamo activo con ese codigo...");
-        return;
-    }
-
-    for (int i = 0; i < equipos.Length; i++){
-        string[] datos = equipos[i].Split(',');
-
-        if (datos.Length >= 4 && datos[0] == id){
-            posEquipo = i;
-            break;
-        }
-    }
-
-    if (posEquipo == -1){
-        Console.WriteLine("No se encontro el equipo registrado...");
-        return;
-    }
-
-    using (var archivo = new StreamWriter(archivoPrestamos, false, Encoding.UTF8)){
-
-        for (int i = 0; i < prestamos.Length; i++){
-            if (i != posPrestamo)
-            {
-                archivo.WriteLine(prestamos[i]);
+        string[] equipos = File.ReadAllLines(archivoEquipos);
+        int posEquipo = -1;
+        for (int i = 0; i < equipos.Length; i++){
+            string[] datos = equipos[i].Split(',');
+            if (datos.Length >= 4 && datos[0] == id){
+                posEquipo = i;
+                break;
             }
         }
-    }
 
-    string[] datosEquipo = equipos[posEquipo].Split(',');
-    datosEquipo[3] = "si";
-    equipos[posEquipo] = string.Join(",", datosEquipo);
-    File.WriteAllLines(archivoEquipos, equipos, Encoding.UTF8);
-    Console.WriteLine("equipo devuelto...");
-}
-// =================================================================================
-// =================================================================================
-    public static void ListarDisponibilidad()
+        if (posEquipo == -1){
+            Console.WriteLine("No se encontro el equipo registrado...");
+            return;
+        }
+
+        string[] datosEquipo = equipos[posEquipo].Split(',');
+        if (datosEquipo[3] != "si"){
+            Console.WriteLine("El equipo no esta disponible para prestamo...");
+            return;
+        }
+
+        using (var archivo = new StreamWriter(archivoPrestamos, true, Encoding.UTF8))
+        {
+            archivo.WriteLine(id + "," + nombre + "," + fecha);
+        }
+
+        datosEquipo[3] = "no";
+        equipos[posEquipo] = string.Join(",", datosEquipo);
+        File.WriteAllLines(archivoEquipos, equipos, Encoding.UTF8);
+        Console.WriteLine("prestamo registrado...");
+    }
+    // =================================================================================
+    // =================================================================================
+    static void DevolverEquipo()
+    {
+        string id = LeerDato("Codigo del equipo a devolver: ");
+        if (!File.Exists(archivoPrestamos)){
+            Console.WriteLine("Prestamos no registrados...");
+            return;
+        }
+        if (!File.Exists(archivoEquipos)){
+            Console.WriteLine("Equipos no registrados...");
+            return;
+        }
+
+        string[] prestamos = File.ReadAllLines(archivoPrestamos);
+        string[] equipos = File.ReadAllLines(archivoEquipos);
+        int posPrestamo = -1;
+        int posEquipo = -1;
+        for (int i = 0; i < prestamos.Length; i++){
+            string[] datos = prestamos[i].Split(',');
+            if (datos.Length >= 3 && datos[0] == id){
+                posPrestamo = i;
+                break;
+            }
+        }
+
+        if (posPrestamo == -1){
+            Console.WriteLine("No hay prestamo activo con ese codigo...");
+            return;
+        }
+        for (int i = 0; i < equipos.Length; i++){
+            string[] datos = equipos[i].Split(',');
+            if (datos.Length >= 4 && datos[0] == id){
+                posEquipo = i;
+                break;
+            }
+        }
+
+        if (posEquipo == -1){
+            Console.WriteLine("No se encontro el equipo registrado...");
+            return;
+        }
+
+        using (var archivo = new StreamWriter(archivoPrestamos, false, Encoding.UTF8)){
+
+            for (int i = 0; i < prestamos.Length; i++){
+                if (i != posPrestamo)
+                {
+                    archivo.WriteLine(prestamos[i]);
+                }
+            }
+        }
+        string[] datosEquipo = equipos[posEquipo].Split(',');
+        datosEquipo[3] = "si";
+        equipos[posEquipo] = string.Join(",", datosEquipo);
+        File.WriteAllLines(archivoEquipos, equipos, Encoding.UTF8);
+        Console.WriteLine("equipo devuelto...");
+    }
+    // =================================================================================
+    // =================================================================================
+    static void ListarDisponibilidad()
     {
         if (!File.Exists(archivoEquipos)){
             Console.WriteLine("No hay equipos registrados...");
@@ -191,7 +239,7 @@ public static void DevolverEquipo()
     }
 // =================================================================================
 // =================================================================================
-    public static void ContarEquipos()
+    static void ContarEquipos()
     {
         string categoria = LeerDato("Categoria a consultar: ");
         int cantidad = 0;

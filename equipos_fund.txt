@@ -1,0 +1,3 @@
+﻿EQ100,laptop,computadora,si
+EQ101,mouse,periferico,si
+EQ102,monitor,computadora,si
